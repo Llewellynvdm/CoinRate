@@ -1,0 +1,3 @@
+# here you add the sms username, password and API id (example)
+# username	password	api_id
+# James	xxxxxx	0000001 (remove this note and remove .txt from the file name ;)

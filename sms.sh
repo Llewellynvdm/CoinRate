@@ -19,28 +19,32 @@
 # get script path
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Telegram notify
-function notifyMe() {
-	# check if notify is set
-	if [ ! -f "$DIR/notify" ] 
+# clickatell sms HTTP
+function smsMe() {
+	# check if sms details are set
+	if [ ! -f "$DIR/sms" ] 
 	then
-		echo "Please set the details for Telegram found in notify.txt"
+		echo "Please set the details for clickatell found in sms.txt"
 		exit 1
 	fi
+	# check if phone numbers are set
+	if [ ! -f "$DIR/smsto" ] 
+	then
+		echo "Please set the phone numbers as found in smsto.txt"
+		exit 1
+	fi
+	# set Args
+	local message="$1"
 	# get first line
-	local NOTIFY=$(head -n 1 "$DIR/notify")
+	local SMSd=$(head -n 1 "$DIR/sms")
+	local to=$(head -n 1 "$DIR/smsto")
 	# get the keys
 	IFS=$'	'
-	local keys=( $NOTIFY )
-	# set chatid & token
-	local chatid="${keys[0]}"
-	local token="${keys[1]}"
-	local default_message="notify!"
-
-	if [ -z "$@" ]
-	then
-		curl -s --data-urlencode "text=$default_message" "https://api.telegram.org/bot$token/sendMessage?chat_id=$chatid" > /dev/null
-	else
-		curl -s --data-urlencode "text=$@" "https://api.telegram.org/bot$token/sendMessage?chat_id=$chatid" > /dev/null
-	fi
+	local keyss=( $SMSd )
+	# set user, password & api_id
+	local username="${keyss[0]}"
+	local password="${keyss[1]}"
+	local api_id="${keyss[2]}"
+	# send the sms's
+	curl -s --data "user=${username}&password=${password}&api_id=${api_id}&to=${to}&text=${message}" "https://api.clickatell.com/http/sendmsg"
 }

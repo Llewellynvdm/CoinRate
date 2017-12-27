@@ -1,0 +1,3 @@
+# here you add all then numbers to sms comma separated(example)
+# number,number,number
+# 264810000000,264811111111,264812222222,264812222222 (remove this note and remove .txt from the file name ;)

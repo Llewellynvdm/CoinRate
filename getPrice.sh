@@ -23,6 +23,9 @@ VDMHOME=~/
 # load notify
 . "$DIR/notify.sh"
 
+# load sms
+. "$DIR/sms.sh"
+
 # main function
 function main () {
 	echoTweak "Getting the current price of $Currency in $Target"
@@ -48,6 +51,8 @@ function main () {
 	fi
 	# show linux messages if any were loaded
 	showLinuxMessage
+	# send SMS messages if any were loaded
+	sendSMSMessage
 }
 
 function getTarget() {
@@ -136,6 +141,8 @@ function sendMessage () {
 	sendTelegram "$message"
 	# set Linux messages
 	setLinuxMessage "$message"
+	# set SMS messages
+	setSMSMessage "$message"
 }
 
 # check if we already showed the message today
@@ -202,6 +209,8 @@ AboveValue=0
 Telegram=0
 linuxMessages=()
 LinuxNotice=0
+SMSMessages=()
+SMS=0
 API="https://cex.io/api/last_price/"
 VDMHOME=~/
 
@@ -229,6 +238,7 @@ Getting Coin Value in Fiat Currency at set price
    -b Send Notice below target value once a day
    -a Send Notice above target value once a day (default)
    -n Send A Telegram Notice aswell (always shows comandline Notice)
+   -m Send A SMS Notice aswell (always shows comandline Notice)
    -l Show A Linux Notice aswell (always shows comandline Notice)
 
 EOF
@@ -240,7 +250,7 @@ exit 1
 # http://mywiki.wooledge.org/BashFAQ/035
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
 
-while getopts ":c:t:s:v:A:B:b :a :n :l :" opt; do
+while getopts ":c:t:s:v:A:B:b :a :n :m :l :" opt; do
 	case $opt in
 	c)
 		Currency=$OPTARG
@@ -268,6 +278,9 @@ while getopts ":c:t:s:v:A:B:b :a :n :l :" opt; do
 	;;
 	n)
 		Telegram=1
+	;;
+	m)
+		SMS=1
 	;;
 	l)
 		LinuxNotice=1
@@ -316,6 +329,25 @@ function showLinuxMessage () {
 		IFS=$'\n'
 		messages="${linuxMessages[*]}"
 		zenity --text="${messages}" --info 2> /dev/null
+	fi
+}
+
+# set sms messages
+function setSMSMessage () {
+	# check if we should send sms messages
+	if (( "$SMS" == 1 && "$show" == 1 ));
+		then
+		SMSMessages+=("$1")
+	fi
+}
+
+# send sms messages
+function sendSMSMessage () {
+	# check if we have messages to send
+	if [ ${#SMSMessages[@]} -gt 0 ]; then
+		IFS=$'\n'
+		messages="${SMSMessages[*]}"
+		smsMe "${messages}"
 	fi
 }
 
