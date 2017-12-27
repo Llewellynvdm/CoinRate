@@ -1,0 +1,3 @@
+# here you add the notify chat ID and Token (example)
+# ChatID	Token
+# 00000000	000000000:xxx00xxxx00xxxxxxx00xxxxx00xxxxxxxx (remove this note and remove .txt from the file name ;)
