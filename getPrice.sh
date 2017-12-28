@@ -28,8 +28,8 @@ VDMHOME=~/
 
 # main function
 function main () {
-	echo "................................................................................................"
-	echo "...==========================================================================================..."
+	echo ".................................[ Vast Development Method ]...................................."
+	echo "...========================================================================| www.vdm.io |====..."
 	echoTweak "Getting the current price of $Currency in $Target"
 	echo "...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~..."
 	# get the price value
@@ -310,10 +310,12 @@ AboveValue=0
 Telegram=0
 LinuxNotice=0
 SMS=0
+
+# Some paths
 API="https://cex.io/api/last_price/"
 VDMHOME=~/
 
-# set some arrays
+# Some arrays
 declare -A aboveMessages
 declare -A belowMessages
 Messages=()
@@ -322,16 +324,16 @@ Messages=()
 Datetimenow=$(TZ=":ZULU" date +"%m/%d/%Y @ %R (UTC)" )
 
 # Help display function
-function send_help {
+function show_help {
 cat << EOF
 Usage: ${0##*/:-} [OPTION...]
 Getting Coin Value in Fiat Currency at set price
 
    -c Currency to watch (c:_)
 			example: BTC
-   -t Target Currecy to Display (_:t)
+   -C Target Currecy to Display (_:t)
 			example: USD
-   -s The cycle of time to follow
+   -h How often should the message be send/shown
 			0 = once per/day (default)
 			1 = once per/hour
 			2 = everyTime
@@ -344,8 +346,8 @@ Getting Coin Value in Fiat Currency at set price
 			example: 14000 or 14000,15000
    -b Send Notice below target value once a day
    -a Send Notice above target value once a day (default)
-   -n Send A Telegram Notice aswell (always sends comandline Notice)
-   -m Send A SMS Notice aswell (always shows comandline Notice)
+   -t Send A Telegram Notice aswell (always sends comandline Notice)
+   -s Send A SMS Notice aswell (always shows comandline Notice)
    -l Show A Linux Notice aswell (always shows comandline Notice)
 
 EOF
@@ -357,15 +359,15 @@ exit 1
 # http://mywiki.wooledge.org/BashFAQ/035
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
 
-while getopts ":c:t:s:v:A:B:b :a :n :m :l :" opt; do
+while getopts ":c:C:h:v:A:B:b :a :t :s :l :" opt; do
 	case $opt in
 	c)
 		Currency=$OPTARG
 	;;
-	t)
+	C)
 		Target=$OPTARG
 	;;
-	s)
+	h)
 		sendSwitch=$OPTARG
 	;;
 	v)
@@ -383,10 +385,10 @@ while getopts ":c:t:s:v:A:B:b :a :n :m :l :" opt; do
 	a)
 		AboveValue=1
 	;;
-	n)
+	t)
 		Telegram=1
 	;;
-	m)
+	s)
 		SMS=1
 	;;
 	l)
