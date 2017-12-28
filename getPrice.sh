@@ -28,8 +28,10 @@ VDMHOME=~/
 
 # main function
 function main () {
+	echo "................................................................................................"
+	echo "...==========================================================================================..."
 	echoTweak "Getting the current price of $Currency in $Target"
-	echo
+	echo "...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~..."
 	# get the price value
 	value=$(get_Price "${API}${Currency}/${Target}")
 	# set send key
@@ -49,8 +51,11 @@ function main () {
 	then
 		getTarget "$TargetBelowValue" "$value" 'setActionBelow'
 	fi
+	echo "...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~..."
 	# send Messages
 	sendMessages
+	echo "...==========================================================================================..."
+	echo "................................................................................................"
 }
 
 function getTarget() {
@@ -118,9 +123,8 @@ function preform () {
 		# set message since we are above target value
 		setMessage "$target_type" "$current_value" "$target_value"
 	else
-		echoTweak "Nothing to report at this time! ($target_value)"
+		echoTweak "Nothing to report at this time! ($target_value) "
 	fi
-	echo
 }
 
 # set message
@@ -132,8 +136,8 @@ function setMessage () {
 	# build message
 	message="${Currency} is ${target_type} ${target_value} ${Target} at ${current_value} ${Target}"
 	# first send to comand line
-	echoTweak "${message} - ${Datetimenow}"
-	# is it show time
+	echoTweak "${message} - ${Datetimenow} "
+	# is it send time
 	sendTime "$target_type" "$target_value"
 	# set to messages
 	setMessages "$message" "$target_type" "$target_value"
@@ -216,11 +220,12 @@ function getActiveAboveMessage () {
 	echo $( echo "${keys}" | head -n1 )
 }
 
-# show message in linux
+# show message in linux (will not work on server)
 function showLinuxMessage () {
 	# check if linux messages can be shown
 	if (( "$LinuxNotice" == 1 )); then
 		zenity --text="$1" --info 2> /dev/null
+		echoTweak "Linux Message was shown"
 	fi	
 }
 
@@ -229,6 +234,7 @@ function sendSMSMessage () {
 	# check if we should send SMS
 	if (( "$SMS" == 1 )); then
 		smsMe "${messages}"
+		echoTweak "SMS Message was send"
 	fi
 }
 
@@ -237,6 +243,7 @@ function sendTelegram () {
 	# check if we should send Telegram
 	if (( "$Telegram" ==  1 )); then
 		notifyMe "$1"
+		echoTweak "Telegram Message was send"
 	fi
 }
 
@@ -245,7 +252,7 @@ function sendTime () {
 	# set Args
 	local target_type="$1"
 	local target_value="$2"
-	# build key show time
+	# build key send time
 	keySendTime=$(echo -n "${target_type}${target_value}${sendKey}" | md5sum)
 	# check if we should send
 	if (( "$sendSwitch" == 2 ))
@@ -405,7 +412,7 @@ function echoTweak () {
 	fi	
 	increaseBy=$((20+mainlen-chrlen))
 	tweaked=$(repeat "$increaseBy")
-	echo -n "$echoMessage$tweaked"
+	echo ".... $echoMessage $tweaked"
 }
 
 # little repeater

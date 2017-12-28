@@ -46,5 +46,5 @@ function smsMe() {
 	local password="${keyss[1]}"
 	local api_id="${keyss[2]}"
 	# send the sms's
-	curl -s --data "user=${username}&password=${password}&api_id=${api_id}&to=${to}&text=${message}" "https://api.clickatell.com/http/sendmsg"
+	curl -s --data "user=${username}&password=${password}&api_id=${api_id}&to=${to}&text=${message}" "https://api.clickatell.com/http/sendmsg" > /dev/null
 }
