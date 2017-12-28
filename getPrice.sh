@@ -32,8 +32,8 @@ function main () {
 	echo
 	# get the price value
 	value=$(get_Price "${API}${Currency}/${Target}")
-	# set show key
-	setShowKey
+	# set send key
+	setSendKey
 	# set target values and perform action if only TargetValue given
 	if (( "$TargetBelowValue" == 0 && "$TargetAboveValue" == 0));
 	then
@@ -49,10 +49,8 @@ function main () {
 	then
 		getTarget "$TargetBelowValue" "$value" 'setActionBelow'
 	fi
-	# show linux messages if any were loaded
-	showLinuxMessage
-	# send SMS messages if any were loaded
-	sendSMSMessage
+	# send Messages
+	sendMessages
 }
 
 function getTarget() {
@@ -117,77 +115,173 @@ function preform () {
 	# check if there is need of action
 	if (( "$action" == 1 ));
 	then
-		# send message since we are above target value
-		sendMessage "$target_type" "$current_value" "$target_value"
+		# set message since we are above target value
+		setMessage "$target_type" "$current_value" "$target_value"
 	else
 		echoTweak "Nothing to report at this time! ($target_value)"
 	fi
 	echo
 }
 
-# send message
-function sendMessage () {
+# set message
+function setMessage () {
 	# set Args
 	local target_type="$1"
 	local current_value="$2"
 	local target_value="$3"
 	# build message
-	message="${Currency} is ${target_type} ${target_value}${Target} at ${current_value}${Target}"
+	message="${Currency} is ${target_type} ${target_value} ${Target} at ${current_value} ${Target}"
 	# first send to comand line
 	echoTweak "${message} - ${Datetimenow}"
 	# is it show time
-	showTime "$target_type" "$target_value"
-	# send to telegram
-	sendTelegram "$message"
-	# set Linux messages
-	setLinuxMessage "$message"
-	# set SMS messages
-	setSMSMessage "$message"
+	sendTime "$target_type" "$target_value"
+	# set to messages
+	setMessages "$message" "$target_type" "$target_value"
 }
 
-# check if we already showed the message today
-function showTime () {
+# set messages
+function setMessages () {
+	# set Args
+	local message="$1"
+	local type="$2"
+	local value="$3"
+	# check if we should set messages
+	if (( "$send" == 1 )); then
+			# we can set message
+			if [ "$type" == "below" ]; then
+				# set below message
+				belowMessages["$value"]="$message"
+			elif [ "$type" == "above" ]; then
+				# set above message
+				aboveMessages["$value"]="$message"
+			fi
+	fi
+}
+
+# send messages
+function sendMessages () {
+	# filter messages to only send the lowest-below and the highest-above
+	filterMessages
+	# check if we have messages
+	if [ ${#Messages[@]} -gt 0 ]; then
+		# set to string
+		IFS=$'\n'
+		local messages="${Messages[*]}"
+		# send Telegram messages if allowed
+		sendTelegram "${messages}"
+		# show linux messages if allowed
+		showLinuxMessage "${messages}"
+		# send SMS messages if allowed
+		sendSMSMessage "${messages}"
+	fi
+}
+
+# filter messages to only send the lowest-below and the highest-above
+function filterMessages () {
+	# check if lower value is found
+	if [ ${#belowMessages[@]} -gt 0 ]; then
+		# get lowest
+		activeKey=$( getActiveBelowMessages )
+		# set to messages
+		Messages+=("${belowMessages[$activeKey]}")
+	fi
+	# check if higher value is found
+	if [ ${#aboveMessages[@]} -gt 0 ]; then
+		# get highest
+		activeKey=$( getActiveAboveMessage )
+		# set to messages
+		Messages+=("${aboveMessages[$activeKey]}")
+	fi
+}
+
+# array sort
+function getActiveBelowMessages () {
+	# start the search
+	local keys+=$(for i in "${!belowMessages[@]}"
+	do
+		echo $i
+	done | sort -n)
+	# return keys
+	echo $( echo "${keys}" | head -n1 )
+}
+
+# array sort
+function getActiveAboveMessage () {
+	# start the search
+	local keys+=$(for i in "${!aboveMessages[@]}"
+	do
+		echo $i
+	done | sort -rn)
+	# return keys
+	echo $( echo "${keys}" | head -n1 )
+}
+
+# show message in linux
+function showLinuxMessage () {
+	# check if linux messages can be shown
+	if (( "$LinuxNotice" == 1 )); then
+		zenity --text="$1" --info 2> /dev/null
+	fi	
+}
+
+# send sms messages
+function sendSMSMessage () {
+	# check if we should send SMS
+	if (( "$SMS" == 1 )); then
+		smsMe "${messages}"
+	fi
+}
+
+# send Telegram
+function sendTelegram () {
+	# check if we should send Telegram
+	if (( "$Telegram" ==  1 )); then
+		notifyMe "$1"
+	fi
+}
+
+# check if it is time to show/send the messages
+function sendTime () {
 	# set Args
 	local target_type="$1"
 	local target_value="$2"
 	# build key show time
-	keyShowTime=$(echo -n "${target_type}${target_value}${showKey}" | md5sum)
-	if grep -Fxq "$keyShowTime" "$VDMHOME/.cointracker"
+	keySendTime=$(echo -n "${target_type}${target_value}${showKey}" | md5sum)
+	# check if we should send
+	if (( "$sendSwitch" == 2 ))
+	then
+		# send every time
+		send=1
+	elif grep -Fxq "$keySendTime" "$VDMHOME/.cointracker"
 	then
 		# Do not send notification (already send in time frame)
-		show=0
+		send=0
 	else
 		# add key to file
-		echo "$keyShowTime" >> "$VDMHOME/.cointracker"
+		echo "$keySendTime" >> "$VDMHOME/.cointracker"
 		# send notification if asked to
-		show=1
+		send=1
 	fi
 	
 }
 
-# set the show key
-function setShowKey () {
-	# what is the cycle of show time
-	if (( "$showSwitch" == 1 ));
+# set the send key
+function setSendKey () {
+	# what is the cycle of send time
+	if (( "$sendSwitch" == 1 ));
 	then
 		# once every hour
-		showKey=$(TZ=":ZULU" date +"%m/%d/%Y (%H)" )
-	elif (( "$showSwitch" == 2 ));
+		sendKey=$(TZ=":ZULU" date +"%m/%d/%Y (%H)" )
+	elif (( "$sendSwitch" == 3 ));
 	then
-		# on every run
-		showKey=$((1 + RANDOM % 1000000))
-	elif (( "$showSwitch" == 3 ));
-	then
-		# only once ever
-		showKey="OnlyOnce"
+		# show only once (ever)
+		sendKey="showOnce"
 	fi
 	# default (once per day)
+	# or send every time
 }
 
-# use UTC+00:00 time also called zulu
-Datetimenow=$(TZ=":ZULU" date +"%m/%d/%Y @ %R (UTC)" )
-
-# getting the data from yahoo
+# getting the price from CEX.io (API)
 function get_Price () {
 	# get price from API
     json=$(wget -q -O- "$1")
@@ -201,21 +295,27 @@ Target="USD"
 TargetValue="17000"
 TargetBelowValue=0
 TargetAboveValue=0
-showKey=$(TZ=":ZULU" date +"%m/%d/%Y" )
-show=0
-showSwitch=0
+sendKey=$(TZ=":ZULU" date +"%m/%d/%Y" )
+send=0
+sendSwitch=0
 BelowValue=0
 AboveValue=0
 Telegram=0
-linuxMessages=()
 LinuxNotice=0
-SMSMessages=()
 SMS=0
 API="https://cex.io/api/last_price/"
 VDMHOME=~/
 
+# set some arrays
+declare -A aboveMessages
+declare -A belowMessages
+Messages=()
+
+# use UTC+00:00 time also called zulu
+Datetimenow=$(TZ=":ZULU" date +"%m/%d/%Y @ %R (UTC)" )
+
 # Help display function
-function show_help {
+function send_help {
 cat << EOF
 Usage: ${0##*/:-} [OPTION...]
 Getting Coin Value in Fiat Currency at set price
@@ -229,15 +329,15 @@ Getting Coin Value in Fiat Currency at set price
 			1 = once per/hour
 			2 = everyTime
 			3 = only once
-   -v Value (above or below) at which to show/send notice
+   -v Value (above or below) at which to send/send notice
 			example: 17000 or 14000,15000
-   -A Value Above at which to show/send notice
+   -A Value Above at which to send notice
 			example: 17000 or 19000,18000
-   -B Value Below at which to show/send notice
+   -B Value Below at which to send notice
 			example: 14000 or 14000,15000
    -b Send Notice below target value once a day
    -a Send Notice above target value once a day (default)
-   -n Send A Telegram Notice aswell (always shows comandline Notice)
+   -n Send A Telegram Notice aswell (always sends comandline Notice)
    -m Send A SMS Notice aswell (always shows comandline Notice)
    -l Show A Linux Notice aswell (always shows comandline Notice)
 
@@ -259,7 +359,7 @@ while getopts ":c:t:s:v:A:B:b :a :n :m :l :" opt; do
 		Target=$OPTARG
 	;;
 	s)
-		showSwitch=$OPTARG
+		sendSwitch=$OPTARG
 	;;
 	v)
 		TargetValue=$OPTARG
@@ -311,53 +411,6 @@ function echoTweak () {
 # little repeater
 function repeat () {
 	head -c $1 < /dev/zero | tr '\0' '\056'
-}
-
-# set linux messages
-function setLinuxMessage () {
-	# check if we should show linux messages
-	if (( "$LinuxNotice" == 1 && "$show" == 1 ));
-		then
-		linuxMessages+=("$1")
-	fi
-}
-
-# show message in linux
-function showLinuxMessage () {
-	# check if we have messages to show
-	if [ ${#linuxMessages[@]} -gt 0 ]; then
-		IFS=$'\n'
-		messages="${linuxMessages[*]}"
-		zenity --text="${messages}" --info 2> /dev/null
-	fi
-}
-
-# set sms messages
-function setSMSMessage () {
-	# check if we should send sms messages
-	if (( "$SMS" == 1 && "$show" == 1 ));
-		then
-		SMSMessages+=("$1")
-	fi
-}
-
-# send sms messages
-function sendSMSMessage () {
-	# check if we have messages to send
-	if [ ${#SMSMessages[@]} -gt 0 ]; then
-		IFS=$'\n'
-		messages="${SMSMessages[*]}"
-		smsMe "${messages}"
-	fi
-}
-
-# send Telegram
-function sendTelegram () {
-	# check if we should send telegram
-	if (( "$Telegram" ==  1 && "$show" == 1 ));
-	then
-		notifyMe "$1"
-	fi
 }
 
 # make sure the tracker file is set
