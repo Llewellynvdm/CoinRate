@@ -16,6 +16,10 @@
 #
 #/-----------------------------------------------------------------------------------------------------------------------------/
 
+# Do some prep work
+command -v jq >/dev/null 2>&1 || { echo >&2 "We require jq for this script to run, but it's not installed.  Aborting."; exit 1; }
+command -v curl >/dev/null 2>&1 || { echo >&2 "We require curl for this script to run, but it's not installed.  Aborting."; exit 1; }
+
 # get script path
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 VDMHOME=~/
@@ -129,7 +133,7 @@ function preform () {
 		# set message since we are above target value
 		setMessage "$target_type" "$current_value" "$target_value"
 	else
-		echoTweak "Nothing to report at this time! ($target_value) "
+		echoTweak "${Currency} not ${target_type} ${target_value}${Target} at this time!"
 	fi
 }
 
@@ -228,6 +232,8 @@ function getActiveAboveMessage () {
 
 # show message in linux (will not work on server)
 function showLinuxMessage () {
+	# do some prep
+	command -v zenity >/dev/null 2>&1 || { echoTweak "We require zenity to show linux notice, but it's not installed."; LinuxNotice=0; }
 	# check if linux messages can be shown
 	if (( "$LinuxNotice" == 1 )); then
 		zenity --text="$1" --info 2> /dev/null
@@ -355,7 +361,7 @@ Getting Coin Value in Fiat Currency at set price
    -q Quiet - Turn off terninal output
    -t Send A Telegram Notice
    -s Send A SMS Notice
-   -l Show A Linux Notice
+   -l Show A Linux Notice via zenity
 
 EOF
 exit 1
