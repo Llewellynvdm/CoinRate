@@ -311,7 +311,7 @@ TargetAboveValue=0
 sendKey=$(TZ=":ZULU" date +"%m/%d/%Y" )
 allowEcho=1
 send=0
-sendSwitch=0
+sendSwitch=2
 BelowValue=0
 AboveValue=0
 Telegram=0
