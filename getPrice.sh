@@ -28,10 +28,12 @@ VDMHOME=~/
 
 # main function
 function main () {
-	echo ".................................[ Vast Development Method ]...................................."
-	echo "...========================================================================| www.vdm.io |====..."
-	echoTweak "Getting the current price of $Currency in $Target"
-	echo "...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~..."
+	if (( "$allowEcho" == 1 )); then
+		echo ".................................[ Vast Development Method ]...................................."
+		echo "...========================================================================| www.vdm.io |====..."
+		echoTweak "Getting the current price of $Currency in $Target"
+		echo "...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~..."
+	fi
 	# get the price value
 	value=$(get_Price "${API}${Currency}/${Target}")
 	# set send key
@@ -51,11 +53,15 @@ function main () {
 	then
 		getTarget "$TargetBelowValue" "$value" 'setActionBelow'
 	fi
-	echo "...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~..."
+	if (( "$allowEcho" == 1 )); then
+		echo "...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~..."
+	fi
 	# send Messages
 	sendMessages
-	echo "...==========================================================================================..."
-	echo "................................................................................................"
+	if (( "$allowEcho" == 1 )); then
+		echo "...==========================================================================================..."
+		echo "................................................................................................"
+	fi
 }
 
 function getTarget() {
@@ -296,13 +302,14 @@ function get_Price () {
     echo "${value}"
 }
 
-# Some defaults
+# Some global defaults
 Currency="BTC"
 Target="USD"
 TargetValue="17000"
 TargetBelowValue=0
 TargetAboveValue=0
 sendKey=$(TZ=":ZULU" date +"%m/%d/%Y" )
+allowEcho=1
 send=0
 sendSwitch=0
 BelowValue=0
@@ -311,11 +318,10 @@ Telegram=0
 LinuxNotice=0
 SMS=0
 
-# Some paths
+# API URL
 API="https://cex.io/api/last_price/"
-VDMHOME=~/
 
-# Some arrays
+# Some Messages arrays
 declare -A aboveMessages
 declare -A belowMessages
 Messages=()
@@ -346,9 +352,10 @@ Getting Coin Value in Fiat Currency at set price
 			example: 14000 or 14000,15000
    -b Send Notice below target value once a day
    -a Send Notice above target value once a day (default)
-   -t Send A Telegram Notice aswell (always sends comandline Notice)
-   -s Send A SMS Notice aswell (always shows comandline Notice)
-   -l Show A Linux Notice aswell (always shows comandline Notice)
+   -q Quiet - Turn off terninal output
+   -t Send A Telegram Notice
+   -s Send A SMS Notice
+   -l Show A Linux Notice
 
 EOF
 exit 1
@@ -359,7 +366,7 @@ exit 1
 # http://mywiki.wooledge.org/BashFAQ/035
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
 
-while getopts ":c:C:h:v:A:B:b :a :t :s :l :" opt; do
+while getopts ":c:C:h:v:A:B:b :a :t :s :q :l :" opt; do
 	case $opt in
 	c)
 		Currency=$OPTARG
@@ -385,6 +392,9 @@ while getopts ":c:C:h:v:A:B:b :a :t :s :l :" opt; do
 	a)
 		AboveValue=1
 	;;
+	q)
+		allowEcho=0
+	;;
 	t)
 		Telegram=1
 	;;
@@ -404,17 +414,19 @@ done
 
 # little echo tweak
 function echoTweak () {
-	echoMessage="$1"
-	chrlen="${#echoMessage}"
-	if [ $# -eq 2 ] 
-	then
-		mainlen="$2"
-	else
-		mainlen=70
-	fi	
-	increaseBy=$((20+mainlen-chrlen))
-	tweaked=$(repeat "$increaseBy")
-	echo ".... $echoMessage $tweaked"
+	if (( "$allowEcho" == 1 )); then
+		echoMessage="$1"
+		chrlen="${#echoMessage}"
+		if [ $# -eq 2 ] 
+		then
+			mainlen="$2"
+		else
+			mainlen=70
+		fi	
+		increaseBy=$((20+mainlen-chrlen))
+		tweaked=$(repeat "$increaseBy")
+		echo ".... $echoMessage $tweaked"
+	fi
 }
 
 # little repeater
