@@ -246,7 +246,7 @@ function sendTime () {
 	local target_type="$1"
 	local target_value="$2"
 	# build key show time
-	keySendTime=$(echo -n "${target_type}${target_value}${showKey}" | md5sum)
+	keySendTime=$(echo -n "${target_type}${target_value}${sendKey}" | md5sum)
 	# check if we should send
 	if (( "$sendSwitch" == 2 ))
 	then
