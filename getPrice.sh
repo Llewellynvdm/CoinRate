@@ -43,17 +43,17 @@ function main () {
 	# set send key
 	setSendKey
 	# set target values and perform action if only TargetValue given
-	if (( "$TargetBelowValue" == 0 && "$TargetAboveValue" == 0));
+	if (( "$TargetBelow" == 0 && "$TargetAbove" == 0));
 	then
 		getTarget "$TargetValue" "$value" 'setAction'
 	fi
 	# set target values and perform action if TargetBelowValue given
-	if (( "$TargetAboveValue" != 0 ));
+	if (( "$TargetAbove" == 1 ));
 	then
 		getTarget "$TargetAboveValue" "$value" 'setActionAbove'
 	fi
 	# set target values and perform action if TargetBelowValue given
-	if (( "$TargetBelowValue" != 0 ));
+	if (( "$TargetBelow" == 1 ));
 	then
 		getTarget "$TargetBelowValue" "$value" 'setActionBelow'
 	fi
@@ -314,6 +314,8 @@ Target="USD"
 TargetValue="17000"
 TargetBelowValue=0
 TargetAboveValue=0
+TargetBelow=0
+TargetAbove=0
 sendKey=$(TZ=":ZULU" date +"%m/%d/%Y" )
 allowEcho=1
 send=0
@@ -388,9 +390,11 @@ while getopts ":c:C:h:v:A:B:b :a :t :s :q :l :" opt; do
 	;;
 	B)
 		TargetBelowValue=$OPTARG
+		TargetBelow=1
 	;;
 	A)
 		TargetAboveValue=$OPTARG
+		TargetAbove=1
 	;;
 	b)
 		BelowValue=1
