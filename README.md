@@ -112,7 +112,7 @@ Message options
 **To use shapeshift API add the `-I 2` command:**
 ```bash
 # Get Linux & SMS & Telegram notice when BTC is above 10000 USD (every time command is run)
-    ./getPrice.sh -c BTC -C USD -av 10000 -lst -I 2
+    ./getPrice.sh -c BTC -C ETH -av 16 -l -I 2
 ```
 
 ## Tested Environments
