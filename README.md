@@ -23,15 +23,15 @@ Then give the execution permission to this file:
    $chmod +x getPrice.sh
 ```
 
-Set your sms details (if required):
+**Set your sms details (if required):**
 
 Read [sms.txt](https://github.com/vdm-io/CoinRate/blob/master/sms.txt) for more details.
 
-Set your Telegram details (if required):
+**Set your Telegram details (if required):**
 
 Read [notify.txt](https://github.com/vdm-io/CoinRate/blob/master/notify.txt) for more details.
 
-Set your Factory details (if you want to do build checks):
+**Set your Factory details (if you want to do bulk checks):**
 
 Read [factory.txt](https://github.com/vdm-io/CoinRate/blob/master/factory.txt) for more details.
 
@@ -109,7 +109,7 @@ Message options
     ./getPrice.sh -f /home/coin/factory -to 0
 ```
 
-**To use shapeshift API ad the `-I 2` command:***
+**To use shapeshift API add the `-I 2` command:**
 ```bash
 # Get Linux & SMS & Telegram notice when BTC is above 10000 USD (every time command is run)
     ./getPrice.sh -c BTC -C USD -av 10000 -lst -I 2
@@ -131,11 +131,11 @@ First, open crontab:
 
 Add the following line at bottom of the file (adapting to your script location!!!):
 
-```bash
+```crontab
 * * * * * /home/bitnami/coin/getPrice.sh -f /home/bitnami/coin/factory -to 1 -I 2 >> /home/bitnami/coin/coin.log
 ```
 or
-```bash
+```crontab
 * * * * * /home/bitnami/coin/getPrice.sh -c BTC -C USD -aA 15000,16000,17000 -bB 14000,13000,12000 -to 1 -q
 * * * * * /home/bitnami/coin/getPrice.sh -c XRP -C USD -aA 2.50,2.60,3 -bB 2.50,2.40,2.30 -so 3 -q -I 2
 ```
@@ -144,10 +144,10 @@ or
 
 **Debian & Ubuntu Linux:**
 ```bash
-    $sudo apt-get install bash (Probably BASH is already installed on your system)
+	$sudo apt-get install bash (Probably BASH is already installed on your system)
 	$sudo apt-get install bc (Probably bc is already installed on your system)
 	$sudo apt-get install curl
-    $sudo apt-get install jq
+	$sudo apt-get install jq
 ```
 
 ## Donations
