@@ -23,6 +23,7 @@ MAINLOAD=1
 # Do some prep work
 command -v jq >/dev/null 2>&1 || { echo >&2 "We require jq for this script to run, but it's not installed.  Aborting."; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo >&2 "We require curl for this script to run, but it's not installed.  Aborting."; exit 1; }
+command -v bc >/dev/null 2>&1 || { echo >&2 "We require bc for this script to run, but it's not installed.  Aborting."; exit 1; }
 
 # load notify
 . "$DIR/functions.sh"
@@ -60,8 +61,11 @@ API="https://cex.io/api/last_price/"
 FilePath=''
 
 # Some Messages arrays
+declare -A CurrencyPair
 declare -A aboveMessages
+declare -A aboveKeys
 declare -A belowMessages
+declare -A belowKeys
 Messages=()
 
 # use UTC+00:00 time also called zulu

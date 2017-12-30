@@ -107,8 +107,10 @@ function runMain () {
 
 # get active currency target
 function getActiveCurrencyTarget () {
+	# get price if not already set
+	get_Price
 	# get the price value
-	value=$(get_Price "${API}${Currency}/${Target}")
+	value="${CurrencyPair[${Currency}${Target}]}"
 	# set send key
 	setSendKey
 	# set target values and perform action if only TargetValue given
@@ -209,11 +211,11 @@ function setMessage () {
 	local current_value="$2"
 	local target_value="$3"
 	# build message
-	message="${Currency} is ${target_type} ${target_value} ${Target} at ${current_value} ${Target}"
+	message="${Currency} is ${target_type} ${target_value} ${Target} at ${current_value} ${Target}" &&
 	# first send to comand line
-	echoTweak "${message} - ${Datetimenow} "
+	echoTweak "${message} - ${Datetimenow} " &&
 	# is it send time
-	sendTime "$target_type" "$target_value"
+	sendTime "$target_type" "$target_value" &&
 	# set to messages
 	setMessages "$message" "$target_type" "$target_value"
 }
@@ -226,14 +228,38 @@ function setMessages () {
 	local value="$3"
 	# check if we should set messages
 	if (( "$send" == 1 )); then
-			# we can set message
-			if [ "$type" == "below" ]; then
-				# set below message
-				belowMessages["$value"]="$message"
-			elif [ "$type" == "above" ]; then
-				# set above message
-				aboveMessages["$value"]="$message"
+		# we can set message
+		if [ "$type" == "below" ]; then
+			# set below message
+			belowMessages["${Currency}${Target}${value}"]="$message"
+			# check if we have this array declared
+			if [[ -z "${belowKeys[${Currency}${Target}]+unset}" ]]; then 
+				# load the value
+				belowKeys["${Currency}${Target}"]="$value"
+			else
+				# test if we should load the value
+				local cValue="${belowKeys[${Currency}${Target}]}"
+				local updateValue=$(echo "$cValue > $value" | bc -l)
+				if (( "$updateValue" == 1 )); then
+					belowKeys["${Currency}${Target}"]="$value"
+				fi
 			fi
+		elif [ "$type" == "above" ]; then
+			# set above message
+			aboveMessages["${Currency}${Target}${value}"]="$message"
+			# check if we have this array declared
+			if [[ -z "${aboveKeys[${Currency}${Target}]+unset}" ]]; then 
+				# load the value
+				aboveKeys["${Currency}${Target}"]="$value"
+			else
+				# test if we should load the value
+				local cValue="${aboveKeys[${Currency}${Target}]}"
+				local updateValue=$(echo "$cValue < $value" | bc -l)
+				if (( "$updateValue" == 1 )); then
+					aboveKeys["${Currency}${Target}"]="$value"
+				fi
+			fi
+		fi
 	fi
 }
 
@@ -247,9 +273,9 @@ function sendMessages () {
 		IFS=$'\n'
 		local messages="${Messages[*]}"
 		# send Telegram messages if allowed
-		sendTelegram "${messages}"
+		sendTelegram "${messages}" &&
 		# show linux messages if allowed
-		showLinuxMessage "${messages}"
+		showLinuxMessage "${messages}" &&
 		# send SMS messages if allowed
 		sendSMSMessage "${messages}"
 	fi
@@ -257,42 +283,33 @@ function sendMessages () {
 
 # filter messages to only send the lowest-below and the highest-above
 function filterMessages () {
-	# check if lower value is found
-	if [ ${#belowMessages[@]} -gt 0 ]; then
-		# get lowest
-		activeKey=$( getActiveBelowMessages )
-		# set to messages
-		Messages+=("${belowMessages[$activeKey]}")
-	fi
+	# load a currency pair only once (above/below)
+	declare -A oncePer
 	# check if higher value is found
 	if [ ${#aboveMessages[@]} -gt 0 ]; then
-		# get highest
-		activeKey=$( getActiveAboveMessage )
-		# set to messages
-		Messages+=("${aboveMessages[$activeKey]}")
+		for i in "${!aboveKeys[@]}"
+		do
+			# set it
+			oncePer["$i"]="$i"
+			# get the value
+			local valKey="${aboveKeys[$i]}"
+			# set to messages
+			Messages+=("${aboveMessages[$i$valKey]}")
+		done
 	fi
-}
-
-# array sort
-function getActiveBelowMessages () {
-	# start the search
-	local keys+=$(for i in "${!belowMessages[@]}"
-	do
-		echo $i
-	done | sort -n)
-	# return keys
-	echo $( echo "${keys}" | head -n1 )
-}
-
-# array sort
-function getActiveAboveMessage () {
-	# start the search
-	local keys+=$(for i in "${!aboveMessages[@]}"
-	do
-		echo $i
-	done | sort -rn)
-	# return keys
-	echo $( echo "${keys}" | head -n1 )
+	# check if lower value is found
+	if [ ${#belowMessages[@]} -gt 0 ]; then
+		for i in "${!belowKeys[@]}"
+		do
+			#check if it was set already
+			if [[ -z "${oncePer[$i]+unset}" ]]; then 
+				# get the value
+				local valKey="${belowKeys[$i]}"
+				# set to messages
+				Messages+=("${belowMessages[$i$valKey]}")
+			fi
+		done
+	fi
 }
 
 # show message in linux (will not work on server)
@@ -367,10 +384,21 @@ function setSendKey () {
 
 # getting the price from CEX.io (API)
 function get_Price () {
-	# get price from API
-    json=$(wget -q -O- "$1")
-    value=($( echo "$json" | jq -r '.lprice'))
-    echo "${value}"
+	# check if we already have this Currency Pair Value
+	if [[ -z "${CurrencyPair[${Currency}${Target}]+unset}" ]]; then 
+		# show what currency pair is being fetched
+		if (( "$Factory" == 1 )); then
+			echoTweak "Getting the current price of $Currency in $Target"
+		fi
+		# get price from API
+		local URL="${API}${Currency}/${Target}"
+		# now get the json
+		local json=$(wget -q -O- "$URL")
+		# set the value
+		local value=($( echo "$json" | jq -r '.lprice'))
+		# add value to global bucket
+		CurrencyPair["${Currency}${Target}"]="$value"
+	fi
 }
 
 # run some validation against the options given
