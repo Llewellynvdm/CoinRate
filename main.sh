@@ -57,7 +57,10 @@ LinuxNotice=0
 SMS=0
 
 # API URL
-API="https://cex.io/api/last_price/"
+API_show=1
+API_target="cex"
+API_cex="https://cex.io/api/last_price/" # (default)
+API_shapeshift="https://shapeshift.io/rate/"
 FilePath=''
 
 # Some Messages arrays
@@ -70,9 +73,3 @@ Messages=()
 
 # use UTC+00:00 time also called zulu
 Datetimenow=$(TZ=":ZULU" date +"%m/%d/%Y @ %R (UTC)" )
-
-# make sure the tracker file is set
-if [ ! -f "$VDMHOME/.cointracker" ] 
-then
-	> "$VDMHOME/.cointracker"
-fi

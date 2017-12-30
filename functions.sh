@@ -28,7 +28,7 @@ function runFactory () {
 		if (( "$allowEcho" == 1 )); then
 			echo ".................................[ Vast Development Method ]...................................."
 			echo "...========================================================================| www.vdm.io |====..."
-			echoTweak "Getting all the prices from CEX.io"
+			echoTweak "Getting all the prices from ${API_target}"
 			echo "...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~..."
 		fi
 		# now start parsing the values
@@ -269,6 +269,10 @@ function sendMessages () {
 	filterMessages
 	# check if we have messages
 	if [ ${#Messages[@]} -gt 0 ]; then
+		# load the API being targeted
+		if (( "$API_show" == 1 )); then
+			Messages+=("(${API_target})")
+		fi
 		# set to string
 		IFS=$'\n'
 		local messages="${Messages[*]}"
@@ -353,13 +357,13 @@ function sendTime () {
 	then
 		# send every time
 		send=1
-	elif grep -Fxq "$keySendTime" "$VDMHOME/.cointracker"
+	elif grep -Fxq "$keySendTime" "$COINTracker"
 	then
 		# Do not send notification (already send in time frame)
 		send=0
 	else
 		# add key to file
-		echo "$keySendTime" >> "$VDMHOME/.cointracker"
+		echo "$keySendTime" >> "$COINTracker"
 		# send notification if asked to
 		send=1
 	fi
@@ -391,11 +395,25 @@ function get_Price () {
 			echoTweak "Getting the current price of $Currency in $Target"
 		fi
 		# get price from API
-		local URL="${API}${Currency}/${Target}"
+		if [ "${API_target}" == "cex" ]; then
+			local URL="${API_cex}${Currency}/${Target}"
+		elif [ "${API_target}" == "shapeshift" ]; then
+			local URL="${API_shapeshift}${Currency}_${Target}"
+		fi
 		# now get the json
 		local json=$(wget -q -O- "$URL")
+		# check if we have and error
+		local error=($( echo "$json" | jq -r '.error'))
+		if [ "${error}" != "null" ]; then
+			echo "Currency Pair: $error"
+			exit 1
+		fi
 		# set the value
-		local value=($( echo "$json" | jq -r '.lprice'))
+		if [ "${API_target}" == "cex" ]; then
+			local value=($( echo "$json" | jq -r '.lprice'))
+		elif [ "${API_target}" == "shapeshift" ]; then
+			local value=($( echo "$json" | jq -r '.rate'))
+		fi
 		# add value to global bucket
 		CurrencyPair["${Currency}${Target}"]="$value"
 	fi

@@ -43,23 +43,31 @@ cat << EOF
 Usage: ${0##*/:-} [OPTION...]
 Getting Coin Value in Fiat Currency at set price
 
+	API options
+	======================================================
+   -I Select the api to query 
+		Options:
+		1 = [cex] cex.io - (default)
+		2 =	[shapeshift] 
+   -x Hide API name from message
+
 	Basic options
 	======================================================
    -c Currency to watch (c:_)
-			example: BTC
+		example: BTC
    -C Target Currecy to Display (_:t)
-			example: USD
+		example: USD
    -o How often should the message be send/shown
-			0 = once per/day (default)
-			1 = once per/hour
-			2 = everyTime
-			3 = only once
+		0 = once per/day
+		1 = once per/hour
+		2 = everyTime (default)
+		3 = only once
    -v Value (above or below) at which to send/send notice
-			example: 17000 or 14000,15000
+		example: 17000 or 14000,15000
    -A Value Above at which to send notice
-			example: 17000 or 19000,18000
+		example: 17000 or 19000,18000
    -B Value Below at which to send notice
-			example: 14000 or 14000,15000
+		example: 14000 or 14000,15000
    -b Send Notice below target value once a day
    -a Send Notice above target value once a day (default)
 	
@@ -89,8 +97,16 @@ exit 1
 # http://mywiki.wooledge.org/BashFAQ/035
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
 
-while getopts hc:C:o:v:B:A:baqtslf: opt; do
+while getopts hc:C:o:v:B:A:baqtslf:I: opt; do
 	case $opt in
+	I)
+		if (( "$OPTARG" == 2 )); then
+			API_target="shapeshift"
+		fi
+	;;
+	x)
+		API_show=0
+	;;
 	h)
 		show_help >&2
 		exit 1
@@ -168,6 +184,14 @@ while getopts hc:C:o:v:B:A:baqtslf: opt; do
 	;;
 	esac
 done
+
+# BUILD Cointracker file per/API
+COINTracker="${VDMHOME}/.cointracker_${API_target}"
+# make sure the tracker file is set
+if [ ! -f "$COINTracker" ] 
+then
+	> "$COINTracker"
+fi
 
 # Run the script
 main
