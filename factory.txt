@@ -1,0 +1,5 @@
+# here you can add many currency pairs you want to check in one run, one pair & target (above/below) per line 
+# CurrencyToWatch	TargetCurrecyToDisplay	Value	(Above-1/Below-0)
+# BTC	USD	17000	1
+# BTC	USD	14000,13000	0
+# (remove this note and remove .txt from the file name ;)

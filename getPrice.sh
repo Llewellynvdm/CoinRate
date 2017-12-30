@@ -14,328 +14,28 @@
 #	@copyright		Copyright (C) 2016. All Rights Reserved
 #	@license		GNU/GPL Version 2 or later - http://www.gnu.org/licenses/gpl-2.0.html
 #
-#/-----------------------------------------------------------------------------------------------------------------------------/
-
-# Do some prep work
-command -v jq >/dev/null 2>&1 || { echo >&2 "We require jq for this script to run, but it's not installed.  Aborting."; exit 1; }
-command -v curl >/dev/null 2>&1 || { echo >&2 "We require curl for this script to run, but it's not installed.  Aborting."; exit 1; }
+#=================================================================================================================================
+#                           GETPRICE
+#=================================================================================================================================
 
 # get script path
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 VDMHOME=~/
 
-# load notify
-. "$DIR/notify.sh"
-
-# load sms
-. "$DIR/sms.sh"
+# add the main file
+. "$DIR/main.sh"
 
 # main function
 function main () {
-	if (( "$allowEcho" == 1 )); then
-		echo ".................................[ Vast Development Method ]...................................."
-		echo "...========================================================================| www.vdm.io |====..."
-		echoTweak "Getting the current price of $Currency in $Target"
-		echo "...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~..."
-	fi
-	# get the price value
-	value=$(get_Price "${API}${Currency}/${Target}")
-	# set send key
-	setSendKey
-	# set target values and perform action if only TargetValue given
-	if (( "$TargetBelow" == 0 && "$TargetAbove" == 0));
-	then
-		getTarget "$TargetValue" "$value" 'setAction'
-	fi
-	# set target values and perform action if TargetBelowValue given
-	if (( "$TargetAbove" == 1 ));
-	then
-		getTarget "$TargetAboveValue" "$value" 'setActionAbove'
-	fi
-	# set target values and perform action if TargetBelowValue given
-	if (( "$TargetBelow" == 1 ));
-	then
-		getTarget "$TargetBelowValue" "$value" 'setActionBelow'
-	fi
-	if (( "$allowEcho" == 1 )); then
-		echo "...~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~..."
-	fi
-	# send Messages
-	sendMessages
-	if (( "$allowEcho" == 1 )); then
-		echo "...==========================================================================================..."
-		echo "................................................................................................"
-	fi
-}
-
-function getTarget() {
-	# set Args
-	local target_value="$1"
-	local current_value="$2"
-	local funcName="$3"
-	# do the work
-	if [[ "$target_value" == *,* ]] ; then
-		IFS=',' read -ra ADDR <<< "$target_value"
-		for tValue in "${ADDR[@]}"; do
-			# process "$tValue"
-			$funcName "$current_value" "$tValue"
-		done
+	# run factory
+	if (( "$Factory" == 1 )); then
+		# run the factory
+		runFactory
 	else
-		$funcName "$current_value" "$target_value"
+		# run basic price get
+		runBasicGet
 	fi
 }
-
-function setAction () {
-	# set Args
-	local current_value="$1"
-	local target_value="$2"
-	# should we do above
-	setActionAbove "$current_value" "$target_value"
-	# should we do below
-	setActionBelow "$current_value" "$target_value"
-}
-
-function setActionAbove () {
-	# set Args
-	local current_value="$1"
-	local target_value="$2"
-	# should we do above
-	if (( "$AboveValue" == 1 ));
-	then
-		# get action
-		local action=$(echo "$current_value > $target_value" | bc -l)
-		preform "$current_value" "$target_value" "$action" "above"
-	fi
-}
-
-function setActionBelow () {
-	# set Args
-	local current_value="$1"
-	local target_value="$2"
-	# should we do below
-	if (( "$BelowValue" == 1 ));
-	then
-		# get action
-		local action=$(echo "$current_value < $target_value" | bc -l)
-		preform "$current_value" "$target_value" "$action" "below"
-	fi	
-}
-
-function preform () {
-	# set Args
-	local current_value="$1"
-	local target_value="$2"
-	local action="$3"
-	local target_type="$4"
-	# check if there is need of action
-	if (( "$action" == 1 ));
-	then
-		# set message since we are above target value
-		setMessage "$target_type" "$current_value" "$target_value"
-	else
-		echoTweak "${Currency} not ${target_type} ${target_value}${Target} at this time!"
-	fi
-}
-
-# set message
-function setMessage () {
-	# set Args
-	local target_type="$1"
-	local current_value="$2"
-	local target_value="$3"
-	# build message
-	message="${Currency} is ${target_type} ${target_value} ${Target} at ${current_value} ${Target}"
-	# first send to comand line
-	echoTweak "${message} - ${Datetimenow} "
-	# is it send time
-	sendTime "$target_type" "$target_value"
-	# set to messages
-	setMessages "$message" "$target_type" "$target_value"
-}
-
-# set messages
-function setMessages () {
-	# set Args
-	local message="$1"
-	local type="$2"
-	local value="$3"
-	# check if we should set messages
-	if (( "$send" == 1 )); then
-			# we can set message
-			if [ "$type" == "below" ]; then
-				# set below message
-				belowMessages["$value"]="$message"
-			elif [ "$type" == "above" ]; then
-				# set above message
-				aboveMessages["$value"]="$message"
-			fi
-	fi
-}
-
-# send messages
-function sendMessages () {
-	# filter messages to only send the lowest-below and the highest-above
-	filterMessages
-	# check if we have messages
-	if [ ${#Messages[@]} -gt 0 ]; then
-		# set to string
-		IFS=$'\n'
-		local messages="${Messages[*]}"
-		# send Telegram messages if allowed
-		sendTelegram "${messages}"
-		# show linux messages if allowed
-		showLinuxMessage "${messages}"
-		# send SMS messages if allowed
-		sendSMSMessage "${messages}"
-	fi
-}
-
-# filter messages to only send the lowest-below and the highest-above
-function filterMessages () {
-	# check if lower value is found
-	if [ ${#belowMessages[@]} -gt 0 ]; then
-		# get lowest
-		activeKey=$( getActiveBelowMessages )
-		# set to messages
-		Messages+=("${belowMessages[$activeKey]}")
-	fi
-	# check if higher value is found
-	if [ ${#aboveMessages[@]} -gt 0 ]; then
-		# get highest
-		activeKey=$( getActiveAboveMessage )
-		# set to messages
-		Messages+=("${aboveMessages[$activeKey]}")
-	fi
-}
-
-# array sort
-function getActiveBelowMessages () {
-	# start the search
-	local keys+=$(for i in "${!belowMessages[@]}"
-	do
-		echo $i
-	done | sort -n)
-	# return keys
-	echo $( echo "${keys}" | head -n1 )
-}
-
-# array sort
-function getActiveAboveMessage () {
-	# start the search
-	local keys+=$(for i in "${!aboveMessages[@]}"
-	do
-		echo $i
-	done | sort -rn)
-	# return keys
-	echo $( echo "${keys}" | head -n1 )
-}
-
-# show message in linux (will not work on server)
-function showLinuxMessage () {
-	# do some prep
-	command -v zenity >/dev/null 2>&1 || { echoTweak "We require zenity to show linux notice, but it's not installed."; LinuxNotice=0; }
-	# check if linux messages can be shown
-	if (( "$LinuxNotice" == 1 )); then
-		zenity --text="$1" --info 2> /dev/null
-		echoTweak "Linux Message was shown"
-	fi	
-}
-
-# send sms messages
-function sendSMSMessage () {
-	# check if we should send SMS
-	if (( "$SMS" == 1 )); then
-		smsMe "${messages}"
-		echoTweak "SMS Message was send"
-	fi
-}
-
-# send Telegram
-function sendTelegram () {
-	# check if we should send Telegram
-	if (( "$Telegram" ==  1 )); then
-		notifyMe "$1"
-		echoTweak "Telegram Message was send"
-	fi
-}
-
-# check if it is time to show/send the messages
-function sendTime () {
-	# set Args
-	local target_type="$1"
-	local target_value="$2"
-	# build key send time
-	keySendTime=$(echo -n "${target_type}${target_value}${sendKey}" | md5sum)
-	# check if we should send
-	if (( "$sendSwitch" == 2 ))
-	then
-		# send every time
-		send=1
-	elif grep -Fxq "$keySendTime" "$VDMHOME/.cointracker"
-	then
-		# Do not send notification (already send in time frame)
-		send=0
-	else
-		# add key to file
-		echo "$keySendTime" >> "$VDMHOME/.cointracker"
-		# send notification if asked to
-		send=1
-	fi
-	
-}
-
-# set the send key
-function setSendKey () {
-	# what is the cycle of send time
-	if (( "$sendSwitch" == 1 ));
-	then
-		# once every hour
-		sendKey=$(TZ=":ZULU" date +"%m/%d/%Y (%H)" )
-	elif (( "$sendSwitch" == 3 ));
-	then
-		# show only once (ever)
-		sendKey="showOnce"
-	fi
-	# default (once per day)
-	# or send every time
-}
-
-# getting the price from CEX.io (API)
-function get_Price () {
-	# get price from API
-    json=$(wget -q -O- "$1")
-    value=($( echo "$json" | jq -r '.lprice'))
-    echo "${value}"
-}
-
-# Some global defaults
-Currency="BTC"
-Target="USD"
-TargetValue="17000"
-TargetBelowValue=0
-TargetAboveValue=0
-TargetBelow=0
-TargetAbove=0
-sendKey=$(TZ=":ZULU" date +"%m/%d/%Y" )
-allowEcho=1
-send=0
-sendSwitch=2
-BelowValue=0
-AboveValue=0
-Telegram=0
-LinuxNotice=0
-SMS=0
-
-# API URL
-API="https://cex.io/api/last_price/"
-
-# Some Messages arrays
-declare -A aboveMessages
-declare -A belowMessages
-Messages=()
-
-# use UTC+00:00 time also called zulu
-Datetimenow=$(TZ=":ZULU" date +"%m/%d/%Y @ %R (UTC)" )
 
 # Help display function
 function show_help {
@@ -343,11 +43,13 @@ cat << EOF
 Usage: ${0##*/:-} [OPTION...]
 Getting Coin Value in Fiat Currency at set price
 
+	Basic options
+	======================================================
    -c Currency to watch (c:_)
 			example: BTC
    -C Target Currecy to Display (_:t)
 			example: USD
-   -h How often should the message be send/shown
+   -o How often should the message be send/shown
 			0 = once per/day (default)
 			1 = once per/hour
 			2 = everyTime
@@ -360,11 +62,24 @@ Getting Coin Value in Fiat Currency at set price
 			example: 14000 or 14000,15000
    -b Send Notice below target value once a day
    -a Send Notice above target value once a day (default)
+	
+	Advance options (factory option)
+	======================================================
+   -f Path to file with multiple currency pair options 
+		(see example factory.txt file for details)
+
+	Message options
+	======================================================
    -q Quiet - Turn off terninal output
    -t Send A Telegram Notice
    -s Send A SMS Notice
    -l Show A Linux Notice via zenity
 
+   -h display this help menu
+
+	======================================================
+               Vast Development Method (vdm.io)
+	======================================================
 EOF
 exit 1
 }
@@ -374,19 +89,24 @@ exit 1
 # http://mywiki.wooledge.org/BashFAQ/035
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
 
-while getopts ":c:C:h:v:A:B:b :a :t :s :q :l :" opt; do
+while getopts hc:C:o:v:B:A:baqtslf: opt; do
 	case $opt in
+	h)
+		show_help >&2
+		exit 1
+	;;
 	c)
 		Currency=$OPTARG
 	;;
 	C)
 		Target=$OPTARG
 	;;
-	h)
+	o)
 		sendSwitch=$OPTARG
 	;;
 	v)
 		TargetValue=$OPTARG
+		TargetAll=1
 	;;
 	B)
 		TargetBelowValue=$OPTARG
@@ -414,41 +134,40 @@ while getopts ":c:C:h:v:A:B:b :a :t :s :q :l :" opt; do
 	l)
 		LinuxNotice=1
 	;;
+	f)
+		FilePath=$OPTARG
+		# make sure we have a file
+		if [ ! -f "$FilePath" ] 
+		then
+			echo "File path ($FilePath) does not exist, please add correct path"
+			show_help >&2
+			exit 1
+		fi
+		Factory=1
+		# reset all basic settings
+		Currency="BTC"
+		Target="USD"
+		TargetValue=0
+		TargetBelowValue=0
+		TargetAboveValue=0
+		TargetAll=0
+		TargetBelow=0
+		TargetAbove=0
+		BelowValue=0
+		AboveValue=0
+	;;
+	*)
+		show_help >&2
+		exit 1
+	;;
 	\?)
 		echo "Invalid option: -$OPTARG" >&2
 		echo
-		show_help
+		show_help >&2
+		exit 1
 	;;
 	esac
 done
-
-# little echo tweak
-function echoTweak () {
-	if (( "$allowEcho" == 1 )); then
-		echoMessage="$1"
-		chrlen="${#echoMessage}"
-		if [ $# -eq 2 ] 
-		then
-			mainlen="$2"
-		else
-			mainlen=70
-		fi	
-		increaseBy=$((20+mainlen-chrlen))
-		tweaked=$(repeat "$increaseBy")
-		echo ".... $echoMessage $tweaked"
-	fi
-}
-
-# little repeater
-function repeat () {
-	head -c $1 < /dev/zero | tr '\0' '\056'
-}
-
-# make sure the tracker file is set
-if [ ! -f "$VDMHOME/.cointracker" ] 
-then
-	> "$VDMHOME/.cointracker"
-fi
 
 # Run the script
 main
