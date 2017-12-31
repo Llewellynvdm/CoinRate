@@ -36,8 +36,8 @@ function smsMe() {
 	# set Args
 	local message="$1"
 	# get first line
-	local SMSd=$(head -n 1 "$DIR/sms")
-	local to=$(head -n 1 "$DIR/smsto")
+	local SMSd=$(sed -n "${smsID}p" <  "$DIR/sms")
+	local to=$(sed -n "${smstoID}p" <  "$DIR/smsto")
 	# get the keys
 	IFS=$'	'
 	local keyss=( $SMSd )

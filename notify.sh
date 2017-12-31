@@ -28,10 +28,12 @@ function notifyMe() {
 		exit 1
 	fi
 	# get first line
-	local NOTIFY=$(head -n 1 "$DIR/notify")
+	local NOTIFY=$(sed -n "${TelegramID}p" <  "$DIR/notify")
+
 	# get the keys
 	IFS=$'	'
 	local keys=( $NOTIFY )
+
 	# set chatid & token
 	local chatid="${keys[0]}"
 	local token="${keys[1]}"

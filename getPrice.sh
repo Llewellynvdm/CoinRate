@@ -80,7 +80,10 @@ Getting Coin Value in Fiat Currency at set price
 	======================================================
    -q Quiet - Turn off terninal output
    -t Send A Telegram Notice
+   -T Set notify Line number to use (first line is default)
    -s Send A SMS Notice
+   -M Set sms Line number to use (first line is default)
+   -S Set smsto Line number to use (first line is default)
    -l Show A Linux Notice via zenity
 
    -h display this help menu
@@ -97,7 +100,7 @@ exit 1
 # http://mywiki.wooledge.org/BashFAQ/035
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
 
-while getopts hc:C:o:v:B:A:baqtslf:I: opt; do
+while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I: opt; do
 	case $opt in
 	I)
 		if (( "$OPTARG" == 2 )); then
@@ -144,7 +147,19 @@ while getopts hc:C:o:v:B:A:baqtslf:I: opt; do
 	t)
 		Telegram=1
 	;;
+	T)
+		TelegramID=$OPTARG
+		Telegram=1
+	;;
 	s)
+		SMS=1
+	;;
+	S)
+		smstoID=$OPTARG
+		SMS=1
+	;;
+	M)
+		smsID=$OPTARG
 		SMS=1
 	;;
 	l)
@@ -185,8 +200,11 @@ while getopts hc:C:o:v:B:A:baqtslf:I: opt; do
 	esac
 done
 
+# set call ID
+CALL_ID=$(echo -n "${API_target}${smsID}${smstoID}${TelegramID}" | md5sum | sed 's/ .*$//')
+
 # BUILD Cointracker file per/API
-COINTracker="${VDMHOME}/.cointracker_${API_target}"
+COINTracker="${VDMHOME}/.cointracker_${CALL_ID}"
 # make sure the tracker file is set
 if [ ! -f "$COINTracker" ] 
 then

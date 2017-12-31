@@ -20,10 +20,13 @@
 
 # main is loaded
 MAINLOAD=1
+
 # Do some prep work
 command -v jq >/dev/null 2>&1 || { echo >&2 "We require jq for this script to run, but it's not installed.  Aborting."; exit 1; }
 command -v curl >/dev/null 2>&1 || { echo >&2 "We require curl for this script to run, but it's not installed.  Aborting."; exit 1; }
 command -v bc >/dev/null 2>&1 || { echo >&2 "We require bc for this script to run, but it's not installed.  Aborting."; exit 1; }
+command -v sed >/dev/null 2>&1 || { echo >&2 "We require sed for this script to run, but it's not installed.  Aborting."; exit 1; }
+command -v md5sum >/dev/null 2>&1 || { echo >&2 "We require md5sum for this script to run, but it's not installed.  Aborting."; exit 1; }
 
 # load notify
 . "$DIR/functions.sh"
@@ -36,6 +39,7 @@ command -v bc >/dev/null 2>&1 || { echo >&2 "We require bc for this script to ru
 
 # Some global defaults
 Factory=0
+
 # basic settings
 Currency="BTC"
 Target="USD"
@@ -47,14 +51,18 @@ TargetBelow=0
 TargetAbove=0
 BelowValue=0
 AboveValue=0
+
 # message settings
 send=0
 sendSwitch=2
 sendKey=$(TZ=":ZULU" date +"%m/%d/%Y" )
 allowEcho=1
 Telegram=0
+TelegramID=1
 LinuxNotice=0
 SMS=0
+smsID=1
+smstoID=1
 
 # API URL
 API_show=1
