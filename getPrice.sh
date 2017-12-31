@@ -70,6 +70,7 @@ Getting Coin Value in Fiat Currency at set price
 		example: 14000 or 14000,15000
    -b Send Notice below target value once a day
    -a Send Notice above target value once a day (default)
+   -k hide the above and below from result string
 	
 	Advance options (factory option)
 	======================================================
@@ -100,7 +101,7 @@ exit 1
 # http://mywiki.wooledge.org/BashFAQ/035
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
 
-while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I: opt; do
+while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I:k opt; do
 	case $opt in
 	I)
 		if (( "$OPTARG" == 2 )); then
@@ -140,6 +141,9 @@ while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I: opt; do
 	;;
 	a)
 		AboveValue=1
+	;;
+	k)
+		showAB=0
 	;;
 	q)
 		allowEcho=0

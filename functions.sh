@@ -111,22 +111,25 @@ function getActiveCurrencyTarget () {
 	get_Price
 	# get the price value
 	value="${CurrencyPair[${Currency}${Target}]}"
-	# set send key
-	setSendKey
-	# set target values and perform action if only TargetValue given
-	if (( "$TargetAll" == 1 && "$TargetBelow" == 0 && "$TargetAbove" == 0));
-	then
-		getTarget "$TargetValue" "$value" 'setAction'
-	fi
-	# set target values and perform action if TargetBelowValue given
-	if (( "$TargetAbove" == 1 ));
-	then
-		getTarget "$TargetAboveValue" "$value" 'setActionAbove'
-	fi
-	# set target values and perform action if TargetBelowValue given
-	if (( "$TargetBelow" == 1 ));
-	then
-		getTarget "$TargetBelowValue" "$value" 'setActionBelow'
+	# check that we have a value
+	if [ "${value}" != "null" ]; then
+		# set send key
+		setSendKey
+		# set target values and perform action if only TargetValue given
+		if (( "$TargetAll" == 1 && "$TargetBelow" == 0 && "$TargetAbove" == 0));
+		then
+			getTarget "$TargetValue" "$value" 'setAction'
+		fi
+		# set target values and perform action if TargetBelowValue given
+		if (( "$TargetAbove" == 1 ));
+		then
+			getTarget "$TargetAboveValue" "$value" 'setActionAbove'
+		fi
+		# set target values and perform action if TargetBelowValue given
+		if (( "$TargetBelow" == 1 ));
+		then
+			getTarget "$TargetBelowValue" "$value" 'setActionBelow'
+		fi
 	fi
 }
 
@@ -211,7 +214,11 @@ function setMessage () {
 	local current_value="$2"
 	local target_value="$3"
 	# build message
-	message="${Currency} is ${target_type} ${target_value} ${Target} at ${current_value} ${Target}" &&
+	if (( "$showAB" == 1 )); then
+		message="${Currency} is ${target_type} ${target_value} ${Target} at ${current_value} ${Target}"
+	else
+		message="${Currency} at ${current_value} ${Target}"
+	fi
 	# first send to comand line
 	echoTweak "${message} - ${Datetimenow} " &&
 	# is it send time
@@ -405,17 +412,23 @@ function get_Price () {
 		# check if we have and error
 		local error=($( echo "$json" | jq -r '.error'))
 		if [ "${error}" != "null" ]; then
-			echo "Currency Pair: $error"
-			exit 1
+			if (( "$allowEcho" == 1 )); then
+				echo "...!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!..."
+				echoTweak "${json}"
+				echo "...!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!..."
+			fi
+			# no currency pair found
+			CurrencyPair["${Currency}${Target}"]='null'
+		else
+			# set the value
+			if [ "${API_target}" == "cex" ]; then
+				local value=($( echo "$json" | jq -r '.lprice'))
+			elif [ "${API_target}" == "shapeshift" ]; then
+				local value=($( echo "$json" | jq -r '.rate'))
+			fi
+			# add value to global bucket
+			CurrencyPair["${Currency}${Target}"]="$value"
 		fi
-		# set the value
-		if [ "${API_target}" == "cex" ]; then
-			local value=($( echo "$json" | jq -r '.lprice'))
-		elif [ "${API_target}" == "shapeshift" ]; then
-			local value=($( echo "$json" | jq -r '.rate'))
-		fi
-		# add value to global bucket
-		CurrencyPair["${Currency}${Target}"]="$value"
 	fi
 }
 

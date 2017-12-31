@@ -55,6 +55,7 @@ AboveValue=0
 # message settings
 send=0
 sendSwitch=2
+showAB=1
 sendKey=$(TZ=":ZULU" date +"%m/%d/%Y" )
 allowEcho=1
 Telegram=0
