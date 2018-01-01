@@ -32,6 +32,10 @@ function main () {
 		# run the factory
 		runFactory
 	else
+		# if Percentage is active update above and below based on history
+		if (( "$PercentSwitch" == 1 )); then
+			setPercentage
+		fi
 		# run basic price get
 		runBasicGet
 	fi
@@ -62,7 +66,8 @@ Getting Coin Value in Fiat Currency at set price
 		1 = once per/hour
 		2 = everyTime (default)
 		3 = only once
-   -v Value (above or below) at which to send/send notice
+   -p The percentage up or down at which to send/show notice
+   -v Value (above or below) at which to send/show notice
 		example: 17000 or 14000,15000
    -A Value Above at which to send notice
 		example: 17000 or 19000,18000
@@ -101,7 +106,7 @@ exit 1
 # http://mywiki.wooledge.org/BashFAQ/035
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
 
-while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I:k opt; do
+while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I:kp: opt; do
 	case $opt in
 	I)
 		if (( "$OPTARG" == 2 )); then
@@ -124,6 +129,10 @@ while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I:k opt; do
 	o)
 		sendSwitch=$OPTARG
 	;;
+	p)
+		Percentage=$OPTARG
+		PercentSwitch=1
+	;;
 	v)
 		TargetValue=$OPTARG
 		TargetAll=1
@@ -131,10 +140,12 @@ while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I:k opt; do
 	B)
 		TargetBelowValue=$OPTARG
 		TargetBelow=1
+		BelowValue=1
 	;;
 	A)
 		TargetAboveValue=$OPTARG
 		TargetAbove=1
+		AboveValue=1
 	;;
 	b)
 		BelowValue=1
@@ -207,7 +218,7 @@ done
 # set call ID
 CALL_ID=$(echo -n "${API_target}${smsID}${smstoID}${TelegramID}" | md5sum | sed 's/ .*$//')
 
-# BUILD Cointracker file per/API
+# BUILD Cointracker file per/API (user)
 COINTracker="${VDMHOME}/.cointracker_${CALL_ID}"
 # make sure the tracker file is set
 if [ ! -f "$COINTracker" ] 
@@ -215,5 +226,15 @@ then
 	> "$COINTracker"
 fi
 
+# only set if we have percentage
+if (( "$PercentSwitch" == 1 )); then
+	# BUILD Coin value tracker file per/API (user)
+	COINvaluePath="${VDMHOME}/.coinvalue_${CALL_ID}"
+	# make sure the tracker file is set
+	if [ ! -f "$COINvaluePath" ] 
+	then
+		> "$COINvaluePath"
+	fi
+fi
 # Run the script
 main

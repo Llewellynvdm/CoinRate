@@ -18,6 +18,39 @@
 #                           FUNCTIONS
 #=================================================================================================================================
 
+# workout the values based on percentage at which to send/show notice
+function setPercentage () {
+	# get price if not already set
+	get_Price
+	# get the price value
+	local value="${CurrencyPair[${Currency}${Target}]}"
+	# check that we have a value
+	if [ "${value}" != "null" ]; then
+		# new value
+		COINnewValue="${Currency}${Target}	$value"
+		# check if we have price set before
+		COINlineNr=$( awk "/${Currency}${Target}/{ print NR; exit }" "$COINvaluePath" )
+		re='^[0-9]+$'
+		# Update coin value keeper
+		if ! [[ $COINlineNr =~ $re ]] ; then
+			# set the price for the first time and send notice
+			echo "${COINnewValue}" >> "$COINvaluePath"
+		else
+			# set updater
+			COINupdate=1
+			# old price found
+			COINoldValue=$(sed -n "${COINlineNr}p" <  "$COINvaluePath")
+			# get the keys
+			IFS=$'	'
+			local oldArray=( $COINoldValue )
+			# set the value
+			value="${oldArray[1]}"
+		fi
+		# set the above below values
+		setAboveBelowValues "${value}"
+	fi
+}
+
 # run with the advance field options
 function runFactory () {
 	# array of repos
@@ -110,7 +143,7 @@ function getActiveCurrencyTarget () {
 	# get price if not already set
 	get_Price
 	# get the price value
-	value="${CurrencyPair[${Currency}${Target}]}"
+	local value="${CurrencyPair[${Currency}${Target}]}"
 	# check that we have a value
 	if [ "${value}" != "null" ]; then
 		# set send key
@@ -202,9 +235,40 @@ function preform () {
 	then
 		# set message since we are above target value
 		setMessage "$target_type" "$current_value" "$target_value"
+		# if we run percentage we must update local coin value watcher
+		if (( "$COINupdate" == 1 )); then
+			# update the old price
+			sed -i "${COINlineNr}s/$COINoldValue/$COINnewValue/" "$COINvaluePath"
+		fi
 	else
 		echoTweak "${Currency} not ${target_type} ${target_value}${Target} at this time!"
 	fi
+}
+
+# set the above and below value based on percentage
+function setAboveBelowValues () {
+	# set Args
+	local value="$1"
+	# get the percent
+	local percent=$(echo "scale=20; $Percentage/100*$value" | bc)
+	# check if this is already set
+	if (( "$COINupdate" == 0 )); then
+		# adapt
+		local perFirst=$(echo "$Percentage*2" | bc)
+		# get the percent
+		local centFirst=$(echo "scale=20; $perFirst/100*$value" | bc)
+		# ajust value
+		value=$(echo "scale=20; $centFirst - $value" | bc | awk ' sub("\\.*0+$","") ')
+	fi
+	# get above value
+	TargetAboveValue=$(echo "scale=20; $percent + $value" | bc | awk ' sub("\\.*0+$","") ')
+	# get below value
+	TargetBelowValue=$(echo "scale=20; $value - $percent" | bc | awk ' sub("\\.*0+$","") ')
+	# set the switches
+	TargetBelow=1
+	BelowValue=1
+	TargetAbove=1
+	AboveValue=1
 }
 
 # set message
