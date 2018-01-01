@@ -35,14 +35,16 @@ Read [notify.txt](https://github.com/vdm-io/CoinRate/blob/master/notify.txt) for
 
 Read [factory.txt](https://github.com/vdm-io/CoinRate/blob/master/factory.txt) for more details.
 
+**Set your Dynamic details (if you want to do bulk checks based on percentages):**
+
+Read [dynamic.txt](https://github.com/vdm-io/CoinRate/blob/master/dynamic.txt) for more details.
+
 ## Usage GET
 
 The syntax is quite simple:
 
 ```
  $./getPrice.sh <PARAMETERS>
-
-<%%>: Required param
 ```
 
 **Parameters:**  
@@ -66,7 +68,8 @@ Basic options
 	1 = once per/hour
 	2 = everyTime (default)
 	3 = only once
--v Value (above or below) at which to send/send notice
+-p The percentage up or down at which to send/show notice
+-v Value (above or below) at which to send/show notice
 	example: 17000 or 14000,15000
 -A Value Above at which to send notice
 	example: 17000 or 19000,18000
@@ -74,24 +77,26 @@ Basic options
 	example: 14000 or 14000,15000
 -b Send Notice below target value once a day
 -a Send Notice above target value once a day (default)
+-k hide the above and below from result string
 
 Advance options (factory option)
 ======================================================
--f Path to file with multiple currency pair options 
+-f Path to file with multiple currency pair options (Fixed values)
 	(see example factory.txt file for details)
+-P Path to file with multiple currency pair options (Percentages)
+	(see example dynamic.txt file for details)
 
 Message options
 ======================================================
--q Quiet - Turn off terninal output
+-q Quiet - Turn off terminal output
 -t Send A Telegram Notice
+-T Set notify Line number to use (first line is default)
 -s Send A SMS Notice
+-M Set sms Line number to use (first line is default)
+-S Set smsto Line number to use (first line is default)
 -l Show A Linux Notice via zenity
 
 -h display this help menu
-
-======================================================
-		   Vast Development Method (vdm.io)
-======================================================
 ```
 
 **Examples (CEX API):**
@@ -140,12 +145,22 @@ or
 * * * * * /home/bitnami/coin/getPrice.sh -c XRP -C USD -aA 2.50,2.60,3 -bB 2.50,2.40,2.30 -so 3 -q -I 2
 ```
    
-## BASH, JQ, curl and bc installation
+## Installation Requirements
+
+> BASH, JQ, curl, bc, sed, md5sum, awk
 
 **Debian & Ubuntu Linux:**
+
+_These are probably already installed on your system_
 ```bash
-	$sudo apt-get install bash (Probably BASH is already installed on your system)
-	$sudo apt-get install bc (Probably bc is already installed on your system)
+	$sudo apt-get install bash
+	$sudo apt-get install bc
+	$sudo apt-get install sed
+	$sudo apt-get install md5sum
+	$sudo apt-get install awk
+```
+_These you may need to install_
+```bash
 	$sudo apt-get install curl
 	$sudo apt-get install jq
 ```

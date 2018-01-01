@@ -37,6 +37,8 @@ function runFactory () {
 			local currencypair=($cpairs)
 			# if percentage
 			if (( "$PercentSwitch" == 1 )); then
+				# always rest updater (since it per currency pair
+				COINupdate=0
 				# check number of values
 				if [ ${#currencypair[@]} == 3 ]; then
 					# set globals
@@ -83,7 +85,14 @@ function runFactory () {
 		fi
 	else
 		if (( "$allowEcho" == 1 )); then
-			echo "The file supplied is empty, please add your options to the file (see example factory.txt file for details)"
+			# set correct file name
+			if (( "$PercentSwitch" == 1 )); then
+				file_name="dynamic"
+			else
+				file_name="factory"
+			fi
+			# show error message
+			echo "The file supplied is empty, please add your options to the file (see example ${file_name}.txt file for details)"
 			show_help >&2
 			exit 1
 		fi

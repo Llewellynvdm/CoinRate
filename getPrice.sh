@@ -86,7 +86,7 @@ Getting Coin Value in Fiat Currency at set price
 
 	Message options
 	======================================================
-   -q Quiet - Turn off terninal output
+   -q Quiet - Turn off terminal output
    -t Send A Telegram Notice
    -T Set notify Line number to use (first line is default)
    -s Send A SMS Notice
