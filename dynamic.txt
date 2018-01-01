@@ -1,0 +1,5 @@
+# here you can add many currency pairs you want to check in one run, one pair & target per line 
+# CurrencyToWatch	TargetCurrecyToDisplay	Percentage
+# BTC	USD	5
+# ETH	USD	3
+# (remove this note and remove .txt from the file name ;)

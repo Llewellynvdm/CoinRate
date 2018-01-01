@@ -18,39 +18,6 @@
 #                           FUNCTIONS
 #=================================================================================================================================
 
-# workout the values based on percentage at which to send/show notice
-function setPercentage () {
-	# get price if not already set
-	get_Price
-	# get the price value
-	local value="${CurrencyPair[${Currency}${Target}]}"
-	# check that we have a value
-	if [ "${value}" != "null" ]; then
-		# new value
-		COINnewValue="${Currency}${Target}	$value"
-		# check if we have price set before
-		COINlineNr=$( awk "/${Currency}${Target}/{ print NR; exit }" "$COINvaluePath" )
-		re='^[0-9]+$'
-		# Update coin value keeper
-		if ! [[ $COINlineNr =~ $re ]] ; then
-			# set the price for the first time and send notice
-			echo "${COINnewValue}" >> "$COINvaluePath"
-		else
-			# set updater
-			COINupdate=1
-			# old price found
-			COINoldValue=$(sed -n "${COINlineNr}p" <  "$COINvaluePath")
-			# get the keys
-			IFS=$'	'
-			local oldArray=( $COINoldValue )
-			# set the value
-			value="${oldArray[1]}"
-		fi
-		# set the above below values
-		setAboveBelowValues "${value}"
-	fi
-}
-
 # run with the advance field options
 function runFactory () {
 	# array of repos
@@ -68,22 +35,39 @@ function runFactory () {
 		for cpairs in "${currencypairs[@]}"; do
 			# convert line to array
 			local currencypair=($cpairs)
-			# check number of values
-			if [ ${#currencypair[@]} == 4 ]; then
-				# set globals
-				Currency="${currencypair[0]}"
-				Target="${currencypair[1]}"
-				TargetValue="${currencypair[2]}"
-				TargetAll=1
-				if (( "${currencypair[3]}" == 1 )); then
-					AboveValue=1
+			# if percentage
+			if (( "$PercentSwitch" == 1 )); then
+				# check number of values
+				if [ ${#currencypair[@]} == 3 ]; then
+					# set globals
+					Currency="${currencypair[0]}"
+					Target="${currencypair[1]}"
+					Percentage="${currencypair[2]}"
+					# set percentages
+					setPercentage
+					# run the main functions
+					runMain
 				else
-					BelowValue=1
+					echoTweak "Line missing values, see example dynamic.txt file for details"
 				fi
-				# run the main functions
-				runMain
 			else
-				echoTweak "Line missing values, see example factory.txt file for details"
+				# check number of values
+				if [ ${#currencypair[@]} == 4 ]; then
+					# set globals
+					Currency="${currencypair[0]}"
+					Target="${currencypair[1]}"
+					TargetValue="${currencypair[2]}"
+					TargetAll=1
+					if (( "${currencypair[3]}" == 1 )); then
+						AboveValue=1
+					else
+						BelowValue=1
+					fi
+					# run the main functions
+					runMain
+				else
+					echoTweak "Line missing values, see example factory.txt file for details"
+				fi
 			fi
 		done
 		# display
@@ -136,6 +120,39 @@ function runMain () {
 	runValidation
 	# get the active currency/target
 	getActiveCurrencyTarget	
+}
+
+# workout the values based on percentage at which to send/show notice
+function setPercentage () {
+	# get price if not already set
+	get_Price
+	# get the price value
+	local value="${CurrencyPair[${Currency}${Target}]}"
+	# check that we have a value
+	if [ "${value}" != "null" ]; then
+		# new value
+		COINnewValue="${Currency}${Target}	$value"
+		# check if we have price set before
+		COINlineNr=$( awk "/${Currency}${Target}/{ print NR; exit }" "$COINvaluePath" )
+		re='^[0-9]+$'
+		# Update coin value keeper
+		if ! [[ $COINlineNr =~ $re ]] ; then
+			# set the price for the first time and send notice
+			echo "${COINnewValue}" >> "$COINvaluePath"
+		else
+			# set updater
+			COINupdate=1
+			# old price found
+			COINoldValue=$(sed -n "${COINlineNr}p" <  "$COINvaluePath")
+			# get the keys
+			IFS=$'	'
+			local oldArray=( $COINoldValue )
+			# set the value
+			value="${oldArray[1]}"
+		fi
+		# set the above below values
+		setAboveBelowValues "${value}"
+	fi
 }
 
 # get active currency target

@@ -79,8 +79,10 @@ Getting Coin Value in Fiat Currency at set price
 	
 	Advance options (factory option)
 	======================================================
-   -f Path to file with multiple currency pair options 
+   -f Path to file with multiple currency pair options (Fixed values)
 		(see example factory.txt file for details)
+   -P Path to file with multiple currency pair options (Percentages)
+		(see example dynamic.txt file for details)
 
 	Message options
 	======================================================
@@ -106,7 +108,7 @@ exit 1
 # http://mywiki.wooledge.org/BashFAQ/035
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
 
-while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I:kp: opt; do
+while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I:kp:P: opt; do
 	case $opt in
 	I)
 		if (( "$OPTARG" == 2 )); then
@@ -131,6 +133,30 @@ while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I:kp: opt; do
 	;;
 	p)
 		Percentage=$OPTARG
+		PercentSwitch=1
+	;;
+	P)
+		FilePath=$OPTARG
+		# make sure we have a file
+		if [ ! -f "$FilePath" ] 
+		then
+			echo "File path ($FilePath) does not exist, please add correct path"
+			show_help >&2
+			exit 1
+		fi
+		Factory=1
+		# reset all basic settings
+		Currency="BTC"
+		Target="USD"
+		TargetValue=0
+		TargetBelowValue=0
+		TargetAboveValue=0
+		TargetAll=0
+		TargetBelow=0
+		TargetAbove=0
+		BelowValue=0
+		AboveValue=0
+		# percentage switch
 		PercentSwitch=1
 	;;
 	v)
