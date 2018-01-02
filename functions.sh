@@ -311,7 +311,11 @@ function setMessage () {
 	if (( "$showAB" == 1 )); then
 		message="${Currency} is ${target_type} ${target_value} ${Target} at ${current_value} ${Target}"
 	else
-		message="${Currency} at ${current_value} ${Target}"
+		if [ "${target_type}" == "above" ]; then
+			message="${Currency} at ${current_value} ${Target} ▲"
+		else
+			message="${Currency} at ${current_value} ${Target} ▼"
+		fi
 	fi
 	# first send to comand line
 	echoTweak "${message} - ${Datetimenow} " &&

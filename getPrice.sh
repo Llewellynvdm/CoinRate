@@ -77,7 +77,7 @@ Getting Coin Value in Fiat Currency at set price
 		example: 14000 or 14000,15000
    -b Send Notice below target value once a day
    -a Send Notice above target value once a day (default)
-   -k hide the above and below from result string
+   -k show the above value and below value in the result string
 	
 	Advance options (factory option)
 	======================================================
@@ -189,7 +189,7 @@ while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I:kp:P: opt; do
 		AboveValue=1
 	;;
 	k)
-		showAB=0
+		showAB=1
 	;;
 	q)
 		allowEcho=0

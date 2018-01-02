@@ -35,6 +35,9 @@ function smsMe() {
 	fi
 	# set Args
 	local message="$1"
+	# little fix just incase
+	message="${message//▲/(up)}"
+	message="${message//▼/(down)}"
 	# get first line
 	local SMSd=$(sed -n "${smsID}p" <  "$DIR/sms")
 	local to=$(sed -n "${smstoID}p" <  "$DIR/smsto")
