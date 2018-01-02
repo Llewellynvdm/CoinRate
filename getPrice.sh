@@ -52,7 +52,9 @@ Getting Coin Value in Fiat Currency at set price
    -I Select the api to query 
 		Options:
 		1 = [cex] cex.io - (default)
-		2 =	[shapeshift] 
+		2 = [shapeshift] shapeshift.io
+		3 = [bitfinex] bitfinex.com
+		4 = [gate] gate.io
    -x Hide API name from message
 
 	Basic options
@@ -113,6 +115,13 @@ while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I:kp:P: opt; do
 	I)
 		if (( "$OPTARG" == 2 )); then
 			API_target="shapeshift"
+			API_urlname="shapeshift.io"
+		elif (( "$OPTARG" == 3 )); then
+			API_target="bitfinex"
+			API_urlname="bitfinex.com"
+		elif (( "$OPTARG" == 4 )); then
+			API_target="gate"
+			API_urlname="gate.io"
 		fi
 	;;
 	x)

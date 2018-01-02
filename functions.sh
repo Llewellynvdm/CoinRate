@@ -37,7 +37,7 @@ function runFactory () {
 			local currencypair=($cpairs)
 			# if percentage
 			if (( "$PercentSwitch" == 1 )); then
-				# always rest updater (since it per currency pair
+				# always rest updater (since it per currency pair)
 				COINupdate=0
 				# check number of values
 				if [ ${#currencypair[@]} == 3 ]; then
@@ -48,7 +48,11 @@ function runFactory () {
 					# set percentages
 					setPercentage
 					# run the main functions
-					runMain
+					if (( "$BelowValue" == 0 && "$AboveValue" == 0 )); then
+						echoTweak "${Currency}${Target} returned no value"
+					else
+						runMain
+					fi
 				else
 					echoTweak "Line missing values, see example dynamic.txt file for details"
 				fi
@@ -368,7 +372,7 @@ function sendMessages () {
 	if [ ${#Messages[@]} -gt 0 ]; then
 		# load the API being targeted
 		if (( "$API_show" == 1 )); then
-			Messages+=("(${API_target})")
+			Messages+=("(${API_urlname})")
 		fi
 		# set to string
 		IFS=$'\n'
@@ -491,45 +495,54 @@ function get_Price () {
 		if (( "$Factory" == 1 )); then
 			echoTweak "Getting the current price of $Currency in $Target"
 		fi
-		# get price from API
-		if [ "${API_target}" == "cex" ]; then
-			local URL="${API_cex}${Currency}/${Target}"
-		elif [ "${API_target}" == "shapeshift" ]; then
-			local URL="${API_shapeshift}${Currency}_${Target}"
-		fi
+		# get URL
+		local URL=$(getURL)
 		# now get the json
-		local json=$(wget -q -O- "$URL")
+		local json=$(wget -q -O- "${URL}")
+		# set the key
+		local eKey=$"API_error_${API_target}"
+		local evKey=$"API_error_value_${API_target}"
 		# check if we have and error
-		local error=($( echo "$json" | jq -r '.error'))
-		if [ "${error}" != "null" ]; then
+		local error=($( echo "$json" | jq -r ".${!eKey}"))
+		if [ "${error}" != "${!evKey}" ]; then
 			if (( "$allowEcho" == 1 )); then
-				echo "...!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!..."
+				echo "...__________________________________________________________________________________________..."
 				echoTweak "${json}"
-				echo "...!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!..."
+				echo "...__________________________________________________________________________________________..."
 			fi
 			# no currency pair found
 			CurrencyPair["${Currency}${Target}"]='null'
 		else
+			# set the key
+			local vKey=$"API_json_${API_target}"
 			# set the value
-			if [ "${API_target}" == "cex" ]; then
-				local value=($( echo "$json" | jq -r '.lprice'))
-			elif [ "${API_target}" == "shapeshift" ]; then
-				local value=($( echo "$json" | jq -r '.rate'))
-			fi
+			local value=($( echo "$json" | jq -r ".${!vKey}"))
 			# add value to global bucket
 			CurrencyPair["${Currency}${Target}"]="$value"
 		fi
 	fi
 }
 
+# get the API url
+function getURL () {
+	# API switches
+	if [ "${API_target}" == "cex" ]; then
+		# cex
+		echo "${API_cex}${Currency}/${Target}"
+	elif [ "${API_target}" == "shapeshift" ]; then
+		# shapeshift
+		echo "${API_shapeshift}${Currency}_${Target}"
+	elif [ "${API_target}" == "bitfinex" ]; then
+		# bitfinex
+		echo "${API_bitfinex}${Currency}${Target}"
+	elif [ "${API_target}" == "gate" ]; then
+		# gate
+		echo "${API_gate}${Currency}_${Target}"
+	fi
+}
+
 # run some validation against the options given
 function runValidation () {
-	# check if above or below value is set
-	if (( "$BelowValue" == 0 && "$AboveValue" == 0 )); then
-		echo "Above or Below Switch are required!"
-		show_help
-		exit 1
-	fi
 	# check that value are set
 	if (( "$BelowValue" == 1 && "$TargetAll" == 0 && "$TargetBelow" == 0)); then
 		echo "A below value is required!"
@@ -545,6 +558,12 @@ function runValidation () {
 	# check that value are set
 	if (( "$TargetAll" == 0 && "$TargetBelow" == 0 && "$TargetAbove" == 0 )); then
 		echo "A value is required!"
+		show_help
+		exit 1
+	fi
+	# check if above or below value is set
+	if (( "$BelowValue" == 0 && "$AboveValue" == 0 )); then
+		echo "Above or Below Switch are required!"
 		show_help
 		exit 1
 	fi

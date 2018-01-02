@@ -68,11 +68,33 @@ SMS=0
 smsID=1
 smstoID=1
 
-# API URL
+# API Details
 API_show=1
+# defaults
 API_target="cex"
+API_urlname="cex.io"
+# cex
 API_cex="https://cex.io/api/last_price/" # (default)
+API_json_cex="lprice"
+API_error_cex="error"
+API_error_value_cex="null"
+# shapeshift
 API_shapeshift="https://shapeshift.io/rate/"
+API_json_shapeshift="rate"
+API_error_shapeshift="error"
+API_error_value_shapeshift="null"
+# bitfinex
+API_bitfinex="https://api.bitfinex.com/v1/pubticker/"
+API_json_bitfinex="last_price"
+API_error_bitfinex="message"
+API_error_value_bitfinex="null"
+# gate
+API_gate="https://data.gate.io/api2/1/ticker/"
+API_json_gate="last"
+API_error_gate="message"
+API_error_value_gate="null"
+
+# file path to config
 FilePath=''
 
 # percentage values
