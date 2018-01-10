@@ -54,7 +54,9 @@ API options
 -I Select the api to query 
 	Options:
 	1 = [cex] cex.io - (default)
-	2 =	[shapeshift] 
+	2 = [shapeshift] shapeshift.io
+	3 = [bitfinex] bitfinex.com
+	4 = [gate] gate.io
 -x Hide API name from message
 
 Basic options
@@ -77,7 +79,7 @@ Basic options
 	example: 14000 or 14000,15000
 -b Send Notice below target value once a day
 -a Send Notice above target value once a day (default)
--k hide the above and below from result string
+-k show the above value and below value in the result string
 
 Advance options (factory option)
 ======================================================
@@ -110,8 +112,14 @@ Message options
 # Get SMS notice when XRP is [above 2.50,2.60,3 USD] & [below 2.50,2.40,2.30 USD] (only once - if run in crontab)
     ./getPrice.sh -c XRP -C USD -aA 2.50,2.60,3 -bB 2.50,2.40,2.30 -so 3
 
-# Get Telegram notice when any curracy pair in file meets criteria (once a day - if run in crontab)
+# Get Telegram notice when any currency pair in file meets criteria [fixed amount] (once a day - if run in crontab)
     ./getPrice.sh -f /home/coin/factory -to 0
+
+# Get Telegram notice when any currency pair goes below or above 2 percent (every time - if run in crontab)
+    ./getPrice.sh -c BTC -C USD -tp 2
+
+# Get Telegram notice when any currency pair in file meets criteria [percentage] (every time - if run in crontab)
+    ./getPrice.sh -P /home/coin/dynamic -t
 ```
 
 **To use shapeshift API add the `-I 2` command:**
