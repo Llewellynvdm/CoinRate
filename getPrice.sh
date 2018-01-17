@@ -111,7 +111,7 @@ exit 1
 # http://mywiki.wooledge.org/BashFAQ/035
 # http://wiki.bash-hackers.org/howto/getopts_tutorial
 
-while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I:kp:P: opt; do
+while getopts xhc:C:o:v:B:A:baqtT:sS:M:lf:I:kp:P: opt; do
 	case $opt in
 	I)
 		if (( "$OPTARG" == 2 )); then
