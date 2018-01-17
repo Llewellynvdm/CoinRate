@@ -57,6 +57,7 @@ API options
 	2 = [shapeshift] shapeshift.io
 	3 = [bitfinex] bitfinex.com
 	4 = [gate] gate.io
+	5 = [luno] luno.com
 -x Hide API name from message
 
 Basic options

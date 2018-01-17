@@ -542,6 +542,9 @@ function getURL () {
 	elif [ "${API_target}" == "gate" ]; then
 		# gate
 		echo "${API_gate}${Currency}_${Target}"
+	elif [ "${API_target}" == "luno" ]; then
+		# luno
+		echo "${API_luno}${Currency}${Target}"
 	fi
 }
 

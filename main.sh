@@ -93,6 +93,11 @@ API_gate="https://data.gate.io/api2/1/ticker/"
 API_json_gate="last"
 API_error_gate="message"
 API_error_value_gate="null"
+#luno
+API_luno="https://api.mybitx.com/api/1/ticker?pair="
+API_json_luno="last_trade"
+API_error_luno="error"
+API_error_value_luno="null"
 
 # file path to config
 FilePath=''

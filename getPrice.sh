@@ -55,6 +55,7 @@ Getting Coin Value in Fiat Currency at set price
 		2 = [shapeshift] shapeshift.io
 		3 = [bitfinex] bitfinex.com
 		4 = [gate] gate.io
+		5 = [luno] luno.com
    -x Hide API name from message
 
 	Basic options
@@ -122,6 +123,9 @@ while getopts hc:C:o:v:B:A:baqtT:sS:M:lf:I:kp:P: opt; do
 		elif (( "$OPTARG" == 4 )); then
 			API_target="gate"
 			API_urlname="gate.io"
+		elif (( "$OPTARG" == 5 )); then
+			API_target="luno"
+			API_urlname="luno.com"
 		fi
 	;;
 	x)
